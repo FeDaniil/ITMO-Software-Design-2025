@@ -69,5 +69,5 @@ jobs:
       with:
         branch: gh-pages
         directory: gh-pages
-        GH_PAT: ${{ secrets.GITHUB_TOKEN }}
+        github_token: ${{ secrets.GITHUB_TOKEN }}
     # ===============================
