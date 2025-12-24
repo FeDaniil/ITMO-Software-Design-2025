@@ -11,6 +11,7 @@ from src.commands.pwd import PwdCommand
 from src.commands.exit_cmd import ExitCommand
 from src.commands.assignment import AssignmentCommand
 from src.commands.external import ExternalCommand
+from src.commands.grep import GrepCommand
 
 @pytest.fixture
 def env_manager():
@@ -168,3 +169,88 @@ def test_external_command_failure(mock_run, env_manager):
     result = cmd.execute(env_manager, stdin, stdout, stderr)
     assert result == 127
     assert 'command not found' in stderr.getvalue()
+
+def test_grep_command_stdin(env_manager):
+    cmd = GrepCommand(['hello'])
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+    stdin = io.StringIO('hello world\nsecond line\nhello again\n')
+    result = cmd.execute(env_manager, stdin, stdout, stderr)
+    assert result == 0
+    output = stdout.getvalue()
+    assert 'hello world' in output
+    assert 'hello again' in output
+    assert 'second line' not in output
+
+def test_grep_command_file(env_manager):
+    with tempfile.NamedTemporaryFile(mode='w', delete=False) as f:
+        f.write('line1 hello\nline2\nline3 hello\n')
+        temp_file = f.name
+    try:
+        cmd = GrepCommand(['hello', temp_file])
+        stdout = io.StringIO()
+        stderr = io.StringIO()
+        stdin = io.StringIO()
+        result = cmd.execute(env_manager, stdin, stdout, stderr)
+        assert result == 0
+        output = stdout.getvalue()
+        assert f'{temp_file}:line1 hello' in output
+        assert f'{temp_file}:line3 hello' in output
+    finally:
+        os.unlink(temp_file)
+
+def test_grep_command_word(env_manager):
+    cmd = GrepCommand(['-w', 'hello'])
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+    stdin = io.StringIO('hello world\nhelloworld\nhello\n')
+    result = cmd.execute(env_manager, stdin, stdout, stderr)
+    assert result == 0
+    output = stdout.getvalue()
+    assert 'hello world' in output
+    assert 'hello' in output
+    assert 'helloworld' not in output
+
+def test_grep_command_ignore_case(env_manager):
+    cmd = GrepCommand(['-i', 'HELLO'])
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+    stdin = io.StringIO('hello world\nHello\nHELLO\n')
+    result = cmd.execute(env_manager, stdin, stdout, stderr)
+    assert result == 0
+    output = stdout.getvalue()
+    assert 'hello world' in output
+    assert 'Hello' in output
+    assert 'HELLO' in output
+
+def test_grep_command_after_context(env_manager):
+    cmd = GrepCommand(['-A', '1', 'line1'])
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+    stdin = io.StringIO('line1\nline2\nline3\nline1\nline4\n')
+    result = cmd.execute(env_manager, stdin, stdout, stderr)
+    assert result == 0
+    output = stdout.getvalue()
+    lines = output.strip().split('\n')
+    assert 'line1' in lines[0]
+    assert 'line2' in lines[1]
+    assert 'line1' in lines[2]
+    assert 'line4' in lines[3]
+
+def test_grep_command_no_match(env_manager):
+    cmd = GrepCommand(['nomatch'])
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+    stdin = io.StringIO('line1\nline2\n')
+    result = cmd.execute(env_manager, stdin, stdout, stderr)
+    assert result == 1
+    assert stdout.getvalue() == ''
+
+def test_grep_command_invalid_regex(env_manager):
+    cmd = GrepCommand(['[invalid'])
+    stdout = io.StringIO()
+    stderr = io.StringIO()
+    stdin = io.StringIO('line1\n')
+    result = cmd.execute(env_manager, stdin, stdout, stderr)
+    assert result == 2
+    assert 'unterminated character set' in stderr.getvalue()

@@ -1,4 +1,3 @@
-import sys
 from typing import IO, TYPE_CHECKING
 from . import Command
 

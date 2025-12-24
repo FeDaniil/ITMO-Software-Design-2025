@@ -1,5 +1,4 @@
 import subprocess
-import os
 from typing import IO, TYPE_CHECKING
 from . import Command
 

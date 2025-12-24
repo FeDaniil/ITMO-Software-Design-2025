@@ -6,6 +6,7 @@ from commands.pwd import PwdCommand
 from commands.exit_cmd import ExitCommand
 from commands.assignment import AssignmentCommand
 from commands.external import ExternalCommand
+from commands.grep import GrepCommand
 
 if TYPE_CHECKING:
     from commands import Command
@@ -20,6 +21,7 @@ class CommandRegistry:
             'wc': WcCommand,
             'pwd': PwdCommand,
             'exit': ExitCommand,
+            'grep': GrepCommand,
         }
 
     def get_command(self, name: str, args: list[str]) -> 'Command':

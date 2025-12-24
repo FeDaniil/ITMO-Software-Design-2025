@@ -31,6 +31,7 @@ flowchart TB
         WC["Wc Command"]
         PWD["Pwd Command"]
         EXIT["Exit Command"]
+        GREP["Grep Command"]
   end
  subgraph subGraph5["Система команд"]
         REG["Command Registry"]
@@ -41,7 +42,7 @@ flowchart TB
   end
     CLI --> PARSER & EXEC
     PARSER --> TOKEN & QUOTE & VARSUB & ENV & REG & PIPELINE
-    PIPELINE --> ECHO & CAT & WC & PWD & EXIT & EXT & ASSIGN
+    PIPELINE --> ECHO & CAT & WC & PWD & EXIT & GREP & EXT & ASSIGN
     EXEC --> IOMGR & PROCMGR & REG & ENV
     ASSIGN --> ENV
     style CLI fill:#e1f5fe
@@ -124,7 +125,7 @@ flowchart TB
 
 ### 7. Иерархия команд
 **Типы команд**:
-- **Builtin Commands**: Встроенные команды (echo, cat, wc, pwd, exit)
+- **Builtin Commands**: Встроенные команды (echo, cat, wc, pwd, exit, grep)
 - **External Commands**: Внешние команды (через Process Manager)
 - **Assignment Command**: Команды присваивания переменных
 

@@ -49,6 +49,18 @@ def test_cli_pipeline_exit_in_pipeline(mock_stderr, mock_stdout, mock_input, env
     output = mock_stdout.getvalue()
     assert 'should not run' not in output  # exit должен прервать пайп
 
+@patch('builtins.input', side_effect=['echo "hello world\nsecond line\nhello again" | grep hello', 'exit'])
+@patch('sys.stdout', new_callable=io.StringIO)
+@patch('sys.stderr', new_callable=io.StringIO)
+def test_cli_pipeline_with_grep(mock_stderr, mock_stdout, mock_input, env_vars):
+    cli = CLI(env_vars)
+    with pytest.raises(SystemExit):
+        cli.loop()
+    output = mock_stdout.getvalue()
+    assert 'hello world' in output
+    assert 'hello again' in output
+    assert 'second line' not in output
+
 @patch('builtins.input', side_effect=['VAR=test', 'echo $VAR', 'exit'])
 @patch('sys.stdout', new_callable=io.StringIO)
 @patch('sys.stderr', new_callable=io.StringIO)

@@ -1,13 +1,12 @@
 import subprocess
 import sys
-import os
 import io
-from typing import IO, TYPE_CHECKING
+from typing import TYPE_CHECKING
 from environment import EnvironmentManager
 from pipeline import CommandPipeline
 
 if TYPE_CHECKING:
-    from commands.external import ExternalCommand
+    pass
 
 class CommandExecutor:
     """Выполняет команды и пайплайны."""

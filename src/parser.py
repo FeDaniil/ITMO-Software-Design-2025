@@ -4,7 +4,7 @@ from pipeline import CommandPipeline
 from environment import EnvironmentManager
 
 if TYPE_CHECKING:
-    from commands import Command
+    pass
 
 class CommandParser:
     """Парсит команды из строки."""
