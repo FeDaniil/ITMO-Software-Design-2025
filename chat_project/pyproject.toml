@@ -1,0 +1,35 @@
+[build-system]
+requires = ["hatchling", "hatch-protobuf"]
+build-backend = "hatchling.build"
+
+[project]
+name = "chat-project"
+version = "0.1.0"
+dependencies = [
+    "grpcio>=1.76.0",
+    "grpcio-tools>=1.76.0",
+    "textual>=6.11.0",
+    "textual-serve>=1.1.3",
+]
+
+[project.scripts]
+chat-server = "chat_project.server.grpc_server:sync_main"
+chat-client = "chat_project.client.chat_tui:sync_main"
+chat-web = "chat_project.web_server:main"
+
+[tool.hatch.build.hooks.protobuf]
+dependencies = [
+    "hatch-protobuf",
+    "mypy-protobuf>=4.0",
+]
+proto_paths = ["src/chat_project/protos"]
+output_path = "src/chat_project/generated"
+generate_pyi = false
+
+[[tool.hatch.build.hooks.protobuf.generators]]
+name = "mypy"
+outputs = ["{proto_path}/{proto_name}_pb2.pyi"]
+
+[[tool.hatch.build.hooks.protobuf.generators]]
+name = "mypy_grpc"
+outputs = ["{proto_path}/{proto_name}_pb2_grpc.pyi"]
