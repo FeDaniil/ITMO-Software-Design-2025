@@ -2,9 +2,13 @@ name: Test CLI
 
 on:
   push:
-    branches: [ master ]
+    branches:
+      - master
+      - hw2
   pull_request:
-    branches: [ master ]
+    branches:
+      - master
+      - hw2
 
 jobs:
   run-tests:
