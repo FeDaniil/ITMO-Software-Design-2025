@@ -9,15 +9,45 @@ from src.environment import EnvironmentManager
 def env_vars():
     return {'PS1': '$ '}
 
-@patch('builtins.input', side_effect=['echo hello world', 'exit'])
+@patch('builtins.input', side_effect=['echo hello world | cat', 'exit'])
 @patch('sys.stdout', new_callable=io.StringIO)
 @patch('sys.stderr', new_callable=io.StringIO)
-def test_cli_echo_and_exit(mock_stderr, mock_stdout, mock_input, env_vars):
+def test_cli_pipeline_builtin_builtin(mock_stderr, mock_stdout, mock_input, env_vars):
     cli = CLI(env_vars)
     with pytest.raises(SystemExit):
         cli.loop()
     output = mock_stdout.getvalue()
     assert 'hello world' in output
+
+@patch('builtins.input', side_effect=['VAR=test', 'echo $VAR | wc', 'exit'])
+@patch('sys.stdout', new_callable=io.StringIO)
+@patch('sys.stderr', new_callable=io.StringIO)
+def test_cli_pipeline_with_variables(mock_stderr, mock_stdout, mock_input, env_vars):
+    cli = CLI(env_vars)
+    with pytest.raises(SystemExit):
+        cli.loop()
+    output = mock_stdout.getvalue()
+    assert '1 1 5' in output  # test: 1 line, 1 word, 5 chars (t e s t \n)
+
+@patch('builtins.input', side_effect=['echo line1 | cat | wc', 'exit'])
+@patch('sys.stdout', new_callable=io.StringIO)
+@patch('sys.stderr', new_callable=io.StringIO)
+def test_cli_pipeline_three_commands(mock_stderr, mock_stdout, mock_input, env_vars):
+    cli = CLI(env_vars)
+    with pytest.raises(SystemExit):
+        cli.loop()
+    output = mock_stdout.getvalue()
+    assert '1 1 6' in output  # line1: 1 line, 1 word, 6 chars
+
+@patch('builtins.input', side_effect=['exit | echo should not run', 'exit'])
+@patch('sys.stdout', new_callable=io.StringIO)
+@patch('sys.stderr', new_callable=io.StringIO)
+def test_cli_pipeline_exit_in_pipeline(mock_stderr, mock_stdout, mock_input, env_vars):
+    cli = CLI(env_vars)
+    with pytest.raises(SystemExit):
+        cli.loop()
+    output = mock_stdout.getvalue()
+    assert 'should not run' not in output  # exit должен прервать пайп
 
 @patch('builtins.input', side_effect=['VAR=test', 'echo $VAR', 'exit'])
 @patch('sys.stdout', new_callable=io.StringIO)

@@ -1,6 +1,7 @@
 import subprocess
 import sys
 import os
+import io
 from typing import IO, TYPE_CHECKING
 from environment import EnvironmentManager
 from pipeline import CommandPipeline
@@ -21,26 +22,42 @@ class CommandExecutor:
             return self.execute_pipeline(pipeline)
 
     def execute_pipeline(self, pipeline: CommandPipeline) -> None:
-        processes: List[subprocess.Popen] = []
-        prev_stdout: Optional[IO[str]] = None
+        """
+        Выполняет пайплайн команд, передавая вывод одной команды на вход следующей.
+        
+        Для каждой команды в пайпе:
+        - Первая команда читает из sys.stdin.
+        - Промежуточные команды передают данные через StringIO.
+        - Последняя команда пишет в sys.stdout.
+        - External команды используют subprocess с пайпами.
+        - Built-in команды выполняются последовательно с передачей IO.
+        - Если команда 'exit', прерывает выполнение.
+        """
+        prev_output = None
         
         for i, command in enumerate(pipeline.commands):
-            if i == 0:
-                stdin = sys.stdin
-                stdout = subprocess.PIPE if len(pipeline.commands) > 1 else sys.stdout
-            elif i == len(pipeline.commands) - 1:
-                stdin = prev_stdout
-                stdout = sys.stdout
-            else:
-                stdin = prev_stdout
-                stdout = subprocess.PIPE
+            stdin = prev_output if prev_output else sys.stdin
+            stdout = io.StringIO() if i < len(pipeline.commands) - 1 else sys.stdout
+            
+            if hasattr(command, 'args') and command.args and command.args[0] == 'exit':
+                raise SystemExit(0)
             
             if hasattr(command, 'execute_external'):
-                proc = command.execute_external(stdin, stdout, sys.stderr, self.env_manager.get_all_vars())
-                processes.append(proc)
-                prev_stdout = proc.stdout
+                if i == 0:
+                    proc = command.execute_external(stdin, stdout, sys.stderr, self.env_manager.get_all_vars())
+                    if len(pipeline.commands) > 1:
+                        prev_output = proc.stdout
+                    else:
+                        proc.wait()
+                elif i == len(pipeline.commands) - 1:
+                    proc = subprocess.Popen(command.args, stdin=stdin, stdout=stdout, stderr=sys.stderr, env=self.env_manager.get_all_vars())
+                    proc.wait()
+                else:
+                    proc = subprocess.Popen(command.args, stdin=stdin, stdout=subprocess.PIPE, stderr=sys.stderr, env=self.env_manager.get_all_vars())
+                    prev_output = proc.stdout
             else:
-                pass
-        
-        for proc in processes:
-            proc.wait()
+                command.execute(self.env_manager, stdin, stdout, sys.stderr)
+                if i < len(pipeline.commands) - 1 and hasattr(stdout, 'seek'):
+                    stdout.seek(0)
+                if i < len(pipeline.commands) - 1:
+                    prev_output = stdout
