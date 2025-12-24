@@ -1,0 +1,29 @@
+sd\_cli package
+===============
+
+Submodules
+----------
+
+sd\_cli.commands module
+-----------------------
+
+.. automodule:: sd_cli.commands
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+sd\_cli.executor module
+-----------------------
+
+.. automodule:: sd_cli.executor
+   :members:
+   :show-inheritance:
+   :undoc-members:
+
+Module contents
+---------------
+
+.. automodule:: sd_cli
+   :members:
+   :show-inheritance:
+   :undoc-members:
