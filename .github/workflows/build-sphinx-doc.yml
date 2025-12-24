@@ -33,7 +33,7 @@ jobs:
 
     - name: Generate .rst files from package
       run: |
-        poetry run sphinx-apidoc -o docs/source sd_cli
+        poetry run sphinx-apidoc -o docs/source src/sd_cli/
 
     - name: Build Sphinx HTML documentation
       run: |
