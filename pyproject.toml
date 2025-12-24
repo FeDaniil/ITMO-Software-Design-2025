@@ -1,0 +1,22 @@
+[project]
+name = "sd-cli"
+version = "0.1.0"
+description = "ITMO Software Design Labs. CLI"
+authors = [
+    {name = "Andrey Perevoshikov",email = "A.pervoshchikov@pornhub.com"},
+    {name = "Vadim Kozlov",email = "vadickozlov@pornhub.com"},
+    {name = "Daniil Fedorov",email = "fedaniil@pornhub.com"}
+]
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "pytest (>=8.4.2,<9.0.0)",
+    "ruff (>=0.14.2,<0.15.0)"
+]
+
+[tool.poetry]
+packages = [{include = "sd_cli", from = "src"}]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

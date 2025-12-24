@@ -1,0 +1,3 @@
+[submodule "diagrams/SysDiz"]
+	path = diagrams/SysDiz
+	url = https://github.com/andreyvaran/SysDiz
