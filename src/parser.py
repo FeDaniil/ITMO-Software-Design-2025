@@ -24,19 +24,28 @@ class CommandParser:
     def build_pipeline(self, tokens: List[str]) -> CommandPipeline:
         commands: List[List[str]] = []
         current_cmd: List[str] = []
+        stdout_file = None
         
-        for token in tokens:
+        i = 0
+        while i < len(tokens):
+            token = tokens[i]
             if token == '|':
                 if current_cmd:
                     commands.append(current_cmd)
                     current_cmd = []
+            elif token == '>':
+                if i + 1 < len(tokens):
+                    stdout_file = tokens[i + 1]
+                    i += 1  # skip the filename
+                # ignore further tokens after >
             else:
                 current_cmd.append(token)
+            i += 1
         
         if current_cmd:
             commands.append(current_cmd)
         
-        return CommandPipeline(commands)
+        return CommandPipeline(commands, stdout_file)
 
 class Tokenizer:
     """Токенизатор для разбиения строки на токены."""
@@ -69,6 +78,11 @@ class Tokenizer:
                     tokens.append(current_token)
                     current_token = ""
                 tokens.append('|')
+            elif char == '>':
+                if current_token:
+                    tokens.append(current_token)
+                    current_token = ""
+                tokens.append('>')
             else:
                 current_token += char
             

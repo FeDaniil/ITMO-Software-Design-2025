@@ -49,6 +49,47 @@ def test_cli_pipeline_exit_in_pipeline(mock_stderr, mock_stdout, mock_input, env
     output = mock_stdout.getvalue()
     assert 'should not run' not in output  # exit должен прервать пайп
 
+@patch('builtins.input', side_effect=['echo "line1\nline2\nline3" | cat | wc', 'exit'])
+@patch('sys.stdout', new_callable=io.StringIO)
+@patch('sys.stderr', new_callable=io.StringIO)
+def test_cli_pipeline_three_commands_cat_wc(mock_stderr, mock_stdout, mock_input, env_vars):
+    cli = CLI(env_vars)
+    with pytest.raises(SystemExit):
+        cli.loop()
+    output = mock_stdout.getvalue()
+    assert '3 3 18' in output  # 3 lines, 3 words, 18 chars
+
+@patch('builtins.input', side_effect=['echo "hello world\nsecond line\nhello again" | grep hello | wc', 'exit'])
+@patch('sys.stdout', new_callable=io.StringIO)
+@patch('sys.stderr', new_callable=io.StringIO)
+def test_cli_pipeline_grep_wc(mock_stderr, mock_stdout, mock_input, env_vars):
+    cli = CLI(env_vars)
+    with pytest.raises(SystemExit):
+        cli.loop()
+    output = mock_stdout.getvalue()
+    assert '2 4 24' in output  # 2 lines, 4 words, 24 chars (hello world\nhello again\n)
+
+@patch('builtins.input', side_effect=['echo "test content" > test.txt', 'cat test.txt', 'exit'])
+@patch('sys.stdout', new_callable=io.StringIO)
+@patch('sys.stderr', new_callable=io.StringIO)
+def test_cli_redirection_output(mock_stderr, mock_stdout, mock_input, env_vars):
+    cli = CLI(env_vars)
+    with pytest.raises(SystemExit):
+        cli.loop()
+    output = mock_stdout.getvalue()
+    assert 'test content' in output
+
+@patch('builtins.input', side_effect=['cat main.py | echo', 'exit'])
+@patch('sys.stdout', new_callable=io.StringIO)
+@patch('sys.stderr', new_callable=io.StringIO)
+def test_cli_pipeline_cat_echo_no_args(mock_stderr, mock_stdout, mock_input, env_vars):
+    cli = CLI(env_vars)
+    with pytest.raises(SystemExit):
+        cli.loop()
+    output = mock_stdout.getvalue()
+    # Should output the content of main.py
+    assert 'import' in output or 'from' in output  # assuming main.py has imports
+
 @patch('builtins.input', side_effect=['echo "hello world\nsecond line\nhello again" | grep hello', 'exit'])
 @patch('sys.stdout', new_callable=io.StringIO)
 @patch('sys.stderr', new_callable=io.StringIO)

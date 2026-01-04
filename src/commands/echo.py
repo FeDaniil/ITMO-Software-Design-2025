@@ -11,6 +11,9 @@ class EchoCommand(Command):
         self.args = args
 
     def execute(self, env_manager: 'EnvironmentManager', stdin: IO[str], stdout: IO[str], stderr: IO[str]) -> int:
-        output = ' '.join(self.args)
+        if not self.args:
+            output = ''.join(stdin)
+        else:
+            output = ' '.join(self.args)
         print(output, file=stdout)
         return 0

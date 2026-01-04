@@ -15,19 +15,24 @@ class CommandExecutor:
         self.env_manager = env_manager
 
     def execute(self, pipeline: CommandPipeline) -> None:
-        if len(pipeline.commands) == 1:
-            return pipeline.commands[0].execute(self.env_manager, sys.stdin, sys.stdout, sys.stderr)
-        else:
-            return self.execute_pipeline(pipeline)
+        final_stdout = open(pipeline.stdout_file, 'w') if pipeline.stdout_file else sys.stdout
+        try:
+            if len(pipeline.commands) == 1:
+                return pipeline.commands[0].execute(self.env_manager, sys.stdin, final_stdout, sys.stderr)
+            else:
+                return self.execute_pipeline(pipeline, final_stdout)
+        finally:
+            if pipeline.stdout_file:
+                final_stdout.close()
 
-    def execute_pipeline(self, pipeline: CommandPipeline) -> None:
+    def execute_pipeline(self, pipeline: CommandPipeline, final_stdout) -> None:
         """
         Выполняет пайплайн команд, передавая вывод одной команды на вход следующей.
         
         Для каждой команды в пайпе:
         - Первая команда читает из sys.stdin.
         - Промежуточные команды передают данные через StringIO.
-        - Последняя команда пишет в sys.stdout.
+        - Последняя команда пишет в final_stdout.
         - External команды используют subprocess с пайпами.
         - Built-in команды выполняются последовательно с передачей IO.
         - Если команда 'exit', прерывает выполнение.
@@ -36,7 +41,7 @@ class CommandExecutor:
         
         for i, command in enumerate(pipeline.commands):
             stdin = prev_output if prev_output else sys.stdin
-            stdout = io.StringIO() if i < len(pipeline.commands) - 1 else sys.stdout
+            stdout = io.StringIO() if i < len(pipeline.commands) - 1 else final_stdout
             
             if hasattr(command, 'args') and command.args and command.args[0] == 'exit':
                 raise SystemExit(0)
